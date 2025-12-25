@@ -6,12 +6,12 @@ import { DollarSign, TrendingUp, Users, Clock } from "lucide-react";
 import { MonthlyTargetCard } from "@/components/dashboard/MonthlyTargetCard";
 
 export default function Dashboard() {
-  const { user, userRole } = useAuth();
+  const { user, userRole, currentAgency } = useAuth();
 
   const { data: stats, isLoading, error } = useQuery({
-    queryKey: ["dashboard-stats", user?.id, userRole],
+    queryKey: ["dashboard-stats", user?.id, userRole, currentAgency?.id],
     queryFn: async () => {
-      if (!user) return null;
+      if (!user || !currentAgency) return null;
 
       if (userRole === "CREATOR") {
         // Get current month date range
@@ -81,11 +81,11 @@ export default function Dashboard() {
         };
       }
 
-      if (userRole === "ADMIN" || userRole === "INVESTOR") {
+      if (userRole === "ADMIN" || userRole === "INVESTOR" || userRole === "AGENCY_OWNER") {
         const [salesData, creatorsData, payoutsData] = await Promise.all([
-          supabase.from("penjualan_harian").select("gmv, commission_gross"),
-          supabase.from("profiles").select("id").eq("role", "CREATOR").eq("status", "ACTIVE"),
-          supabase.from("payouts").select("total_payout").eq("status", "PAID"),
+          supabase.from("penjualan_harian").select("gmv, commission_gross").eq("agency_id", currentAgency.id),
+          supabase.from("profiles").select("id").eq("role", "CREATOR").eq("status", "ACTIVE").eq("agency_id", currentAgency.id),
+          supabase.from("payouts").select("total_payout").eq("status", "PAID").eq("agency_id", currentAgency.id),
         ]);
 
         const totalGMV = salesData.data?.reduce((acc, curr) => acc + Number(curr.gmv), 0) || 0;
@@ -103,7 +103,7 @@ export default function Dashboard() {
 
       return null;
     },
-    enabled: !!user && !!userRole,
+    enabled: !!user && !!userRole && !!currentAgency,
   });
 
   const formatCurrency = (value: number) => {
@@ -189,7 +189,7 @@ export default function Dashboard() {
           </>
         )}
 
-        {(userRole === "ADMIN" || userRole === "INVESTOR") && (
+        {(userRole === "ADMIN" || userRole === "INVESTOR" || userRole === "AGENCY_OWNER") && (
           <>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

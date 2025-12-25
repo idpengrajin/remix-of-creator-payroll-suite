@@ -14,6 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import InvitationManagement from "@/components/invitation/InvitationManagement";
 
 interface Creator {
   id: string;
@@ -38,7 +39,7 @@ interface CommissionRule {
 }
 
 export default function Kreator() {
-  const { userRole } = useAuth();
+  const { userRole, currentAgency, agencyRole } = useAuth();
   const [creators, setCreators] = useState<Creator[]>([]);
   const [pendingCreators, setPendingCreators] = useState<Creator[]>([]);
   const [commissionRules, setCommissionRules] = useState<CommissionRule[]>([]);
@@ -63,22 +64,28 @@ export default function Kreator() {
   });
 
   useEffect(() => {
-    fetchCreators();
-    fetchCommissionRules();
-  }, []);
+    if (currentAgency) {
+      fetchCreators();
+      fetchCommissionRules();
+    }
+  }, [currentAgency]);
 
   const fetchCreators = async () => {
+    if (!currentAgency) return;
+    
     try {
       const [activeData, pendingData] = await Promise.all([
         supabase
           .from("profiles")
           .select("*")
+          .eq("agency_id", currentAgency.id)
           .eq("role", "CREATOR")
           .eq("status", "ACTIVE")
           .order("created_at", { ascending: false }),
         supabase
           .from("profiles")
           .select("*")
+          .eq("agency_id", currentAgency.id)
           .eq("role", "CREATOR")
           .eq("status", "PENDING_APPROVAL")
           .order("created_at", { ascending: false })
@@ -97,10 +104,13 @@ export default function Kreator() {
   };
 
   const fetchCommissionRules = async () => {
+    if (!currentAgency) return;
+    
     try {
       const { data, error } = await supabase
         .from("aturan_komisi")
-        .select("id, nama_aturan");
+        .select("id, nama_aturan")
+        .eq("agency_id", currentAgency.id);
 
       if (error) throw error;
       setCommissionRules(data || []);
@@ -280,6 +290,11 @@ export default function Kreator() {
           </Badge>
         )}
       </div>
+
+      {/* Invitation Management - Only for Agency Owner/Admin */}
+      {(agencyRole === "AGENCY_OWNER" || agencyRole === "ADMIN") && (
+        <InvitationManagement />
+      )}
 
       {userRole !== 'INVESTOR' && (
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
