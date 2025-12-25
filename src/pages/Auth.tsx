@@ -107,7 +107,7 @@ export default function Auth() {
   // Redirect to dashboard if already logged in
   useEffect(() => {
     if (!loading && user && !isPending) {
-      navigate("/");
+      navigate("/dashboard");
     }
   }, [user, loading, isPending, navigate]);
 
