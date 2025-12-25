@@ -19,16 +19,16 @@ export function ProtectedRoute({ children, allowedRoles, requireSuperAdmin }: Pr
   }
 
   if (!user) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/auth" replace state={{ from: window.location.pathname }} />;
   }
 
   // Super admin check - validated against database via useAuth
   if (requireSuperAdmin && !isSuperAdmin) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   if (allowedRoles && userRole && !allowedRoles.includes(userRole)) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;

@@ -141,11 +141,16 @@ export default function Konfigurasi() {
         if (error) throw error;
         toast.success("Aturan bonus berhasil diperbarui");
       } else {
+        if (!currentAgency?.id) {
+          toast.error("Pilih agensi terlebih dahulu");
+          return;
+        }
         const { error } = await supabase
           .from("aturan_komisi")
           .insert({
             nama_aturan: ruleFormData.nama_aturan,
             slabs: ruleFormData.slabs as any,
+            agency_id: currentAgency.id,
           });
 
         if (error) throw error;

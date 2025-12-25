@@ -128,7 +128,7 @@ export type Database = {
       }
       aturan_komisi: {
         Row: {
-          agency_id: string | null
+          agency_id: string
           created_at: string
           id: string
           nama_aturan: string
@@ -136,7 +136,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          agency_id?: string | null
+          agency_id: string
           created_at?: string
           id?: string
           nama_aturan?: string
@@ -144,7 +144,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          agency_id?: string | null
+          agency_id?: string
           created_at?: string
           id?: string
           nama_aturan?: string
@@ -163,7 +163,7 @@ export type Database = {
       }
       aturan_payroll: {
         Row: {
-          agency_id: string | null
+          agency_id: string
           cap_pct: number
           created_at: string
           daily_live_target_minutes: number
@@ -176,7 +176,7 @@ export type Database = {
           workdays: number[]
         }
         Insert: {
-          agency_id?: string | null
+          agency_id: string
           cap_pct?: number
           created_at?: string
           daily_live_target_minutes?: number
@@ -189,7 +189,7 @@ export type Database = {
           workdays?: number[]
         }
         Update: {
-          agency_id?: string | null
+          agency_id?: string
           cap_pct?: number
           created_at?: string
           daily_live_target_minutes?: number
@@ -213,7 +213,7 @@ export type Database = {
       }
       content_logs: {
         Row: {
-          agency_id: string | null
+          agency_id: string
           created_at: string
           date: string
           id: string
@@ -224,7 +224,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          agency_id?: string | null
+          agency_id: string
           created_at?: string
           date: string
           id?: string
@@ -235,7 +235,7 @@ export type Database = {
           user_id: string
         }
         Update: {
-          agency_id?: string | null
+          agency_id?: string
           created_at?: string
           date?: string
           id?: string
@@ -264,7 +264,7 @@ export type Database = {
       }
       inventory_items: {
         Row: {
-          agency_id: string | null
+          agency_id: string
           catatan: string | null
           created_at: string
           id: string
@@ -275,7 +275,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          agency_id?: string | null
+          agency_id: string
           catatan?: string | null
           created_at?: string
           id?: string
@@ -286,7 +286,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          agency_id?: string | null
+          agency_id?: string
           catatan?: string | null
           created_at?: string
           id?: string
@@ -315,7 +315,7 @@ export type Database = {
       }
       investor_ledger: {
         Row: {
-          agency_id: string | null
+          agency_id: string
           amount: number
           created_at: string
           date: string
@@ -327,7 +327,7 @@ export type Database = {
           type: Database["public"]["Enums"]["ledger_type"]
         }
         Insert: {
-          agency_id?: string | null
+          agency_id: string
           amount: number
           created_at?: string
           date?: string
@@ -339,7 +339,7 @@ export type Database = {
           type: Database["public"]["Enums"]["ledger_type"]
         }
         Update: {
-          agency_id?: string | null
+          agency_id?: string
           amount?: number
           created_at?: string
           date?: string
@@ -362,7 +362,7 @@ export type Database = {
       }
       payouts: {
         Row: {
-          agency_id: string | null
+          agency_id: string
           base_salary: number
           base_salary_adjusted: number
           below_minimum: boolean | null
@@ -378,7 +378,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          agency_id?: string | null
+          agency_id: string
           base_salary?: number
           base_salary_adjusted?: number
           below_minimum?: boolean | null
@@ -394,7 +394,7 @@ export type Database = {
           user_id: string
         }
         Update: {
-          agency_id?: string | null
+          agency_id?: string
           base_salary?: number
           base_salary_adjusted?: number
           below_minimum?: boolean | null
@@ -428,7 +428,7 @@ export type Database = {
       }
       penjualan_harian: {
         Row: {
-          agency_id: string | null
+          agency_id: string
           commission_gross: number
           created_at: string
           date: string
@@ -439,7 +439,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          agency_id?: string | null
+          agency_id: string
           commission_gross?: number
           created_at?: string
           date?: string
@@ -450,7 +450,7 @@ export type Database = {
           user_id: string
         }
         Update: {
-          agency_id?: string | null
+          agency_id?: string
           commission_gross?: number
           created_at?: string
           date?: string
@@ -557,7 +557,7 @@ export type Database = {
       }
       sesi_live: {
         Row: {
-          agency_id: string | null
+          agency_id: string
           check_in: string
           check_out: string | null
           created_at: string
@@ -569,7 +569,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          agency_id?: string | null
+          agency_id: string
           check_in: string
           check_out?: string | null
           created_at?: string
@@ -581,7 +581,7 @@ export type Database = {
           user_id: string
         }
         Update: {
-          agency_id?: string | null
+          agency_id?: string
           check_in?: string
           check_out?: string | null
           created_at?: string
@@ -691,6 +691,10 @@ export type Database = {
         }[]
       }
       get_user_agency_ids: { Args: { _user_id: string }; Returns: string[] }
+      get_user_agency_role: {
+        Args: { _agency_id: string; _user_id: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -707,6 +711,10 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      user_has_agency_access: {
+        Args: { _agency_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       agency_status: "ACTIVE" | "SUSPENDED" | "CANCELLED"
