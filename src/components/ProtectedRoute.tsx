@@ -4,10 +4,11 @@ import { useAuth } from "@/hooks/useAuth";
 interface ProtectedRouteProps {
   children: React.ReactNode;
   allowedRoles?: string[];
+  requireSuperAdmin?: boolean;
 }
 
-export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
-  const { user, userRole, loading } = useAuth();
+export function ProtectedRoute({ children, allowedRoles, requireSuperAdmin }: ProtectedRouteProps) {
+  const { user, userRole, loading, isSuperAdmin } = useAuth();
 
   if (loading) {
     return (
@@ -19,6 +20,11 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Super admin check - validated against database via useAuth
+  if (requireSuperAdmin && !isSuperAdmin) {
+    return <Navigate to="/" replace />;
   }
 
   if (allowedRoles && userRole && !allowedRoles.includes(userRole)) {

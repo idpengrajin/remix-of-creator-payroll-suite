@@ -33,7 +33,14 @@ const App = () => (
           <AuthProvider>
             <Routes>
             <Route path="/auth" element={<Auth />} />
-            <Route path="/admin" element={<SuperAdminDashboard />} />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute requireSuperAdmin>
+                  <SuperAdminDashboard />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/"
               element={
