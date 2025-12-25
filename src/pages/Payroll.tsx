@@ -51,17 +51,21 @@ interface CommissionRule {
 }
 
 export default function Payroll() {
-  const { userRole } = useAuth();
+  const { userRole, currentAgency } = useAuth();
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCalculating, setIsCalculating] = useState(false);
   const [showCalculateDialog, setShowCalculateDialog] = useState(false);
 
   useEffect(() => {
-    fetchPayouts();
-  }, []);
+    if (currentAgency) {
+      fetchPayouts();
+    }
+  }, [currentAgency]);
 
   const fetchPayouts = async () => {
+    if (!currentAgency) return;
+    
     try {
       const { data, error } = await supabase
         .from("payouts")
@@ -72,6 +76,7 @@ export default function Payroll() {
             email
           )
         `)
+        .eq("agency_id", currentAgency.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -147,6 +152,8 @@ export default function Payroll() {
   };
 
   const handleCalculatePayroll = async () => {
+    if (!currentAgency) return;
+    
     setIsCalculating(true);
     setShowCalculateDialog(false);
 
@@ -157,6 +164,7 @@ export default function Payroll() {
       const { data: existingPayouts } = await supabase
         .from("payouts")
         .select("id")
+        .eq("agency_id", currentAgency.id)
         .eq("period_start", period.start)
         .eq("period_end", period.end);
 
@@ -167,8 +175,8 @@ export default function Payroll() {
       }
 
       const [payrollRulesRes, allCommissionRulesRes] = await Promise.all([
-        supabase.from("aturan_payroll").select("*").maybeSingle(),
-        supabase.from("aturan_komisi").select("*"),
+        supabase.from("aturan_payroll").select("*").eq("agency_id", currentAgency.id).maybeSingle(),
+        supabase.from("aturan_komisi").select("*").eq("agency_id", currentAgency.id),
       ]);
 
       if (payrollRulesRes.error) throw payrollRulesRes.error;
@@ -199,6 +207,7 @@ export default function Payroll() {
       const { data: creators, error: creatorsError } = await supabase
         .from("profiles")
         .select("*")
+        .eq("agency_id", currentAgency.id)
         .eq("role", "CREATOR")
         .eq("status", "ACTIVE");
 

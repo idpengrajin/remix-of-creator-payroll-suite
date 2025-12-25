@@ -31,7 +31,7 @@ interface Profile {
 }
 
 export default function Inventaris() {
-  const { userRole } = useAuth();
+  const { userRole, currentAgency } = useAuth();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -46,11 +46,15 @@ export default function Inventaris() {
   });
 
   useEffect(() => {
-    fetchItems();
-    fetchProfiles();
-  }, []);
+    if (currentAgency) {
+      fetchItems();
+      fetchProfiles();
+    }
+  }, [currentAgency]);
 
   const fetchItems = async () => {
+    if (!currentAgency) return;
+    
     try {
       const { data, error } = await supabase
         .from("inventory_items")
@@ -60,6 +64,7 @@ export default function Inventaris() {
             name
           )
         `)
+        .eq("agency_id", currentAgency.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -72,10 +77,13 @@ export default function Inventaris() {
   };
 
   const fetchProfiles = async () => {
+    if (!currentAgency) return;
+    
     try {
       const { data, error } = await supabase
         .from("profiles")
         .select("id, name")
+        .eq("agency_id", currentAgency.id)
         .order("name");
 
       if (error) throw error;
@@ -87,6 +95,8 @@ export default function Inventaris() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentAgency) return;
+    
     setIsLoading(true);
 
     try {
@@ -96,6 +106,7 @@ export default function Inventaris() {
         status: formData.status,
         peminjam_id: formData.peminjam_id || null,
         catatan: formData.catatan || null,
+        agency_id: currentAgency.id,
       };
 
       if (editingItem) {
