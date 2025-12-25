@@ -29,7 +29,7 @@ interface CreatorSales {
 }
 
 export default function Sales() {
-  const { userRole } = useAuth();
+  const { userRole, currentAgency } = useAuth();
   const [salesData, setSalesData] = useState<SalesData[]>([]);
   const [creatorSales, setCreatorSales] = useState<CreatorSales[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,10 +53,10 @@ export default function Sales() {
   }, []);
 
   useEffect(() => {
-    if (currentUser) {
+    if (currentUser && currentAgency) {
       applyDateFilter();
     }
-  }, [currentUser, filterType]);
+  }, [currentUser, filterType, currentAgency]);
 
   const fetchCurrentUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -68,14 +68,20 @@ export default function Sales() {
         .single();
       setCurrentUser(profile);
 
-      // Fetch creators list for admin
-      if (profile?.role === "ADMIN") {
-        const { data: creatorsData } = await supabase
+      // Fetch creators list for admin - filter by agency
+      if (profile?.role === "ADMIN" || profile?.role === "AGENCY_OWNER") {
+        let creatorsQuery = supabase
           .from("profiles")
           .select("id, name")
           .eq("role", "CREATOR")
           .eq("status", "ACTIVE")
           .order("name");
+        
+        if (currentAgency) {
+          creatorsQuery = creatorsQuery.eq("agency_id", currentAgency.id);
+        }
+        
+        const { data: creatorsData } = await creatorsQuery;
         setCreators(creatorsData || []);
       }
     }
@@ -112,6 +118,8 @@ export default function Sales() {
   };
 
   const applyDateFilter = async () => {
+    if (!currentAgency) return;
+    
     setLoading(true);
     try {
       const { start, end } = getDateRange();
@@ -119,6 +127,7 @@ export default function Sales() {
       let query = supabase
         .from("penjualan_harian")
         .select("*")
+        .eq("agency_id", currentAgency.id)
         .gte("date", start)
         .lte("date", end)
         .order("date", { ascending: false });
@@ -131,9 +140,11 @@ export default function Sales() {
       const salesResponse = await query;
       if (salesResponse.error) throw salesResponse.error;
 
+      // Fetch profiles for this agency
       const profilesResponse = await supabase
         .from("profiles")
-        .select("id, name");
+        .select("id, name")
+        .eq("agency_id", currentAgency.id);
 
       if (profilesResponse.error) throw profilesResponse.error;
 
@@ -145,8 +156,8 @@ export default function Sales() {
 
       setSalesData(salesWithProfiles);
 
-      // Calculate per-creator stats for admin
-      if (currentUser?.role === "ADMIN") {
+      // Calculate per-creator stats for admin/owner
+      if (currentUser?.role === "ADMIN" || currentUser?.role === "AGENCY_OWNER") {
         const creatorStats = new Map<string, { name: string; gmv: number; commission: number }>();
         
         salesWithProfiles.forEach(sale => {
@@ -184,19 +195,20 @@ export default function Sales() {
       if (!user) throw new Error("User not authenticated");
 
       // Admin can input for specific creator, otherwise use current user
-      const targetUserId = currentUser?.role === "ADMIN" && formData.user_id 
+      const targetUserId = (currentUser?.role === "ADMIN" || currentUser?.role === "AGENCY_OWNER") && formData.user_id 
         ? formData.user_id 
         : user.id;
 
       const { error } = await supabase
         .from("penjualan_harian")
-        .insert({
+        .insert([{
           user_id: targetUserId,
           date: formData.date,
           source: formData.source,
           gmv: parseFloat(formData.gmv),
-          commission_gross: parseFloat(formData.commission_gross)
-        });
+          commission_gross: parseFloat(formData.commission_gross),
+          agency_id: currentAgency?.id
+        }]);
 
       if (error) throw error;
 
@@ -291,7 +303,7 @@ export default function Sales() {
         formatCurrency={formatCurrency}
       />
 
-      {currentUser?.role === "ADMIN" ? (
+      {(currentUser?.role === "ADMIN" || currentUser?.role === "AGENCY_OWNER") ? (
         <>
           <div className="flex justify-end">
             <AddSalesDialog
