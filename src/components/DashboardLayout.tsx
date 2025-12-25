@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { AgencySwitcher } from "@/components/AgencySwitcher";
 import { motion } from "framer-motion";
 import {
   Sidebar,
@@ -155,7 +156,7 @@ const itemVariants = {
 };
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { signOut, userRole, userName, loading } = useAuth();
+  const { signOut, userRole, userName, loading, currentAgency, isSuperAdmin } = useAuth();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -319,9 +320,17 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               </div>
               
               <div className="flex items-center gap-4">
+                <AgencySwitcher />
                 <div className="hidden sm:flex items-center gap-2 text-sm">
-                  <span className="font-medium">{userName} ({userRole})</span>
+                  <span className="font-medium">{userName}</span>
                 </div>
+                {isSuperAdmin && (
+                  <Link to="/admin">
+                    <Button variant="outline" size="sm">
+                      Admin Panel
+                    </Button>
+                  </Link>
+                )}
                 <Button variant="ghost" size="sm" onClick={signOut}>
                   <LogOut className="h-4 w-4 mr-2" />
                   Logout
