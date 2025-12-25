@@ -19,6 +19,7 @@ import Keuangan from "./pages/Keuangan";
 import Profil from "./pages/Profil";
 import Inventaris from "./pages/Inventaris";
 import Leaderboard from "./pages/Leaderboard";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
           <AuthProvider>
             <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/admin" element={<SuperAdminDashboard />} />
             <Route
               path="/"
               element={
