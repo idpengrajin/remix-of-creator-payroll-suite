@@ -6,14 +6,17 @@ import { DollarSign, TrendingUp, Users, Clock } from "lucide-react";
 import { MonthlyTargetCard } from "@/components/dashboard/MonthlyTargetCard";
 
 export default function Dashboard() {
-  const { user, userRole, currentAgency } = useAuth();
+  const { user, userRole, currentAgency, agencyRole, isSuperAdmin } = useAuth();
 
+  // Use agencyRole for dashboard display (from agency_members), fallback to userRole
+  const effectiveRole = agencyRole || userRole;
+  
   const { data: stats, isLoading, error } = useQuery({
-    queryKey: ["dashboard-stats", user?.id, userRole, currentAgency?.id],
+    queryKey: ["dashboard-stats", user?.id, effectiveRole, currentAgency?.id],
     queryFn: async () => {
       if (!user || !currentAgency) return null;
 
-      if (userRole === "CREATOR") {
+      if (effectiveRole === "CREATOR") {
         // Get current month date range
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -81,7 +84,7 @@ export default function Dashboard() {
         };
       }
 
-      if (userRole === "ADMIN" || userRole === "INVESTOR" || userRole === "AGENCY_OWNER") {
+      if (effectiveRole === "ADMIN" || effectiveRole === "INVESTOR" || effectiveRole === "AGENCY_OWNER" || isSuperAdmin) {
         const [salesData, creatorsData, payoutsData] = await Promise.all([
           supabase.from("penjualan_harian").select("gmv, commission_gross").eq("agency_id", currentAgency.id),
           supabase.from("profiles").select("id").eq("role", "CREATOR").eq("status", "ACTIVE").eq("agency_id", currentAgency.id),
@@ -103,7 +106,7 @@ export default function Dashboard() {
 
       return null;
     },
-    enabled: !!user && !!userRole && !!currentAgency,
+    enabled: !!user && !!effectiveRole && !!currentAgency,
   });
 
   const formatCurrency = (value: number) => {
@@ -124,7 +127,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {userRole === "CREATOR" && (
+        {effectiveRole === "CREATOR" && (
           <>
             {/* Monthly Target Card - Prominent Position */}
             <MonthlyTargetCard 
@@ -189,7 +192,7 @@ export default function Dashboard() {
           </>
         )}
 
-        {(userRole === "ADMIN" || userRole === "INVESTOR" || userRole === "AGENCY_OWNER") && (
+        {(effectiveRole === "ADMIN" || effectiveRole === "INVESTOR" || effectiveRole === "AGENCY_OWNER" || isSuperAdmin) && (
           <>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
