@@ -14,8 +14,121 @@ export type Database = {
   }
   public: {
     Tables: {
+      agencies: {
+        Row: {
+          created_at: string
+          id: string
+          max_creators: number
+          name: string
+          owner_id: string | null
+          slug: string
+          subscription_plan: Database["public"]["Enums"]["subscription_plan"]
+          subscription_status: Database["public"]["Enums"]["agency_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          max_creators?: number
+          name: string
+          owner_id?: string | null
+          slug: string
+          subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
+          subscription_status?: Database["public"]["Enums"]["agency_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          max_creators?: number
+          name?: string
+          owner_id?: string | null
+          slug?: string
+          subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
+          subscription_status?: Database["public"]["Enums"]["agency_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      agency_invitations: {
+        Row: {
+          agency_id: string
+          created_at: string
+          email: string | null
+          expires_at: string
+          id: string
+          invited_by: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          email?: string | null
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          token?: string
+          used_at?: string | null
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          email?: string | null
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_invitations_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agency_members: {
+        Row: {
+          agency_id: string
+          id: string
+          joined_at: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          agency_id: string
+          id?: string
+          joined_at?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          agency_id?: string
+          id?: string
+          joined_at?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_members_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       aturan_komisi: {
         Row: {
+          agency_id: string | null
           created_at: string
           id: string
           nama_aturan: string
@@ -23,6 +136,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          agency_id?: string | null
           created_at?: string
           id?: string
           nama_aturan?: string
@@ -30,16 +144,26 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          agency_id?: string | null
           created_at?: string
           id?: string
           nama_aturan?: string
           slabs?: Json
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "aturan_komisi_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       aturan_payroll: {
         Row: {
+          agency_id: string | null
           cap_pct: number
           created_at: string
           daily_live_target_minutes: number
@@ -52,6 +176,7 @@ export type Database = {
           workdays: number[]
         }
         Insert: {
+          agency_id?: string | null
           cap_pct?: number
           created_at?: string
           daily_live_target_minutes?: number
@@ -64,6 +189,7 @@ export type Database = {
           workdays?: number[]
         }
         Update: {
+          agency_id?: string | null
           cap_pct?: number
           created_at?: string
           daily_live_target_minutes?: number
@@ -75,10 +201,19 @@ export type Database = {
           updated_at?: string
           workdays?: number[]
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "aturan_payroll_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       content_logs: {
         Row: {
+          agency_id: string | null
           created_at: string
           date: string
           id: string
@@ -89,6 +224,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          agency_id?: string | null
           created_at?: string
           date: string
           id?: string
@@ -99,6 +235,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          agency_id?: string | null
           created_at?: string
           date?: string
           id?: string
@@ -110,6 +247,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "content_logs_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "content_logs_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -120,6 +264,7 @@ export type Database = {
       }
       inventory_items: {
         Row: {
+          agency_id: string | null
           catatan: string | null
           created_at: string
           id: string
@@ -130,6 +275,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          agency_id?: string | null
           catatan?: string | null
           created_at?: string
           id?: string
@@ -140,6 +286,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          agency_id?: string | null
           catatan?: string | null
           created_at?: string
           id?: string
@@ -151,6 +298,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "inventory_items_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "inventory_items_peminjam_id_fkey"
             columns: ["peminjam_id"]
             isOneToOne: false
@@ -161,6 +315,7 @@ export type Database = {
       }
       investor_ledger: {
         Row: {
+          agency_id: string | null
           amount: number
           created_at: string
           date: string
@@ -172,6 +327,7 @@ export type Database = {
           type: Database["public"]["Enums"]["ledger_type"]
         }
         Insert: {
+          agency_id?: string | null
           amount: number
           created_at?: string
           date?: string
@@ -183,6 +339,7 @@ export type Database = {
           type: Database["public"]["Enums"]["ledger_type"]
         }
         Update: {
+          agency_id?: string | null
           amount?: number
           created_at?: string
           date?: string
@@ -193,10 +350,19 @@ export type Database = {
           title?: string | null
           type?: Database["public"]["Enums"]["ledger_type"]
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "investor_ledger_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payouts: {
         Row: {
+          agency_id: string | null
           base_salary: number
           base_salary_adjusted: number
           below_minimum: boolean | null
@@ -212,6 +378,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          agency_id?: string | null
           base_salary?: number
           base_salary_adjusted?: number
           below_minimum?: boolean | null
@@ -227,6 +394,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          agency_id?: string | null
           base_salary?: number
           base_salary_adjusted?: number
           below_minimum?: boolean | null
@@ -243,6 +411,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "payouts_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "payouts_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -253,6 +428,7 @@ export type Database = {
       }
       penjualan_harian: {
         Row: {
+          agency_id: string | null
           commission_gross: number
           created_at: string
           date: string
@@ -263,6 +439,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          agency_id?: string | null
           commission_gross?: number
           created_at?: string
           date?: string
@@ -273,6 +450,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          agency_id?: string | null
           commission_gross?: number
           created_at?: string
           date?: string
@@ -284,6 +462,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "penjualan_harian_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "penjualan_harian_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -294,6 +479,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          agency_id: string | null
           base_salary: number | null
           created_at: string
           email: string
@@ -313,6 +499,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          agency_id?: string | null
           base_salary?: number | null
           created_at?: string
           email: string
@@ -332,6 +519,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          agency_id?: string | null
           base_salary?: number | null
           created_at?: string
           email?: string
@@ -358,10 +546,18 @@ export type Database = {
             referencedRelation: "aturan_komisi"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "profiles_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
         ]
       }
       sesi_live: {
         Row: {
+          agency_id: string | null
           check_in: string
           check_out: string | null
           created_at: string
@@ -373,6 +569,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          agency_id?: string | null
           check_in: string
           check_out?: string | null
           created_at?: string
@@ -384,6 +581,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          agency_id?: string | null
           check_in?: string
           check_out?: string | null
           created_at?: string
@@ -395,6 +593,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "sesi_live_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sesi_live_user_id_fkey"
             columns: ["user_id"]
@@ -427,6 +632,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_agency_creator_limit: {
+        Args: { _agency_id: string }
+        Returns: boolean
+      }
       get_creator_sales_stats_by_range: {
         Args: { end_date: string; start_date: string }
         Returns: {
@@ -481,6 +690,7 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_user_agency_ids: { Args: { _user_id: string }; Returns: string[] }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -488,13 +698,29 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_agency_member: {
+        Args: { _agency_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_agency_owner: {
+        Args: { _agency_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "ADMIN" | "CREATOR" | "INVESTOR"
+      agency_status: "ACTIVE" | "SUSPENDED" | "CANCELLED"
+      app_role:
+        | "ADMIN"
+        | "CREATOR"
+        | "INVESTOR"
+        | "SUPER_ADMIN"
+        | "AGENCY_OWNER"
       ledger_type: "CAPITAL_IN" | "CAPITAL_OUT" | "PROFIT_SHARE"
       payout_status: "DRAFT" | "APPROVED" | "PAID"
       sales_source: "TIKTOK" | "SHOPEE"
       shift_type: "PAGI" | "SIANG" | "MALAM"
+      subscription_plan: "FREE" | "PRO" | "ENTERPRISE"
       user_status: "ACTIVE" | "PAUSED" | "ARCHIVED" | "PENDING_APPROVAL"
     }
     CompositeTypes: {
@@ -623,11 +849,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["ADMIN", "CREATOR", "INVESTOR"],
+      agency_status: ["ACTIVE", "SUSPENDED", "CANCELLED"],
+      app_role: ["ADMIN", "CREATOR", "INVESTOR", "SUPER_ADMIN", "AGENCY_OWNER"],
       ledger_type: ["CAPITAL_IN", "CAPITAL_OUT", "PROFIT_SHARE"],
       payout_status: ["DRAFT", "APPROVED", "PAID"],
       sales_source: ["TIKTOK", "SHOPEE"],
       shift_type: ["PAGI", "SIANG", "MALAM"],
+      subscription_plan: ["FREE", "PRO", "ENTERPRISE"],
       user_status: ["ACTIVE", "PAUSED", "ARCHIVED", "PENDING_APPROVAL"],
     },
   },
