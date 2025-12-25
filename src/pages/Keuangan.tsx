@@ -25,7 +25,7 @@ interface LedgerEntry {
 }
 
 export default function Keuangan() {
-  const { userRole } = useAuth();
+  const { userRole, currentAgency } = useAuth();
   const [ledgerEntries, setLedgerEntries] = useState<LedgerEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -39,14 +39,19 @@ export default function Keuangan() {
   });
 
   useEffect(() => {
-    fetchLedger();
-  }, []);
+    if (currentAgency) {
+      fetchLedger();
+    }
+  }, [currentAgency]);
 
   const fetchLedger = async () => {
+    if (!currentAgency) return;
+    
     try {
       const { data, error } = await supabase
         .from("investor_ledger")
         .select("*")
+        .eq("agency_id", currentAgency.id)
         .order("date", { ascending: false });
 
       if (error) throw error;
@@ -60,18 +65,20 @@ export default function Keuangan() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentAgency) return;
     
     try {
       const { error } = await supabase
         .from("investor_ledger")
-        .insert({
+        .insert([{
           date: new Date(formData.date).toISOString(),
           type: formData.type,
           amount: parseFloat(formData.amount),
           title: formData.title,
           keterangan: formData.keterangan || null,
-          proof_link: formData.proof_link || null
-        } as any);
+          proof_link: formData.proof_link || null,
+          agency_id: currentAgency.id
+        }]);
 
       if (error) throw error;
 

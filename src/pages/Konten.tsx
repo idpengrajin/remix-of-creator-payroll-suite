@@ -33,19 +33,22 @@ export default function Konten() {
     post_number: "",
     is_counted: true
   });
-  const { user, userRole } = useAuth();
+  const { user, userRole, currentAgency } = useAuth();
 
   useEffect(() => {
-    if (user) {
+    if (user && currentAgency) {
       fetchContentLogs();
     }
-  }, [user]);
+  }, [user, currentAgency]);
 
   const fetchContentLogs = async () => {
+    if (!currentAgency) return;
+    
     try {
       let query = supabase
         .from("content_logs")
         .select("*, profiles(name)")
+        .eq("agency_id", currentAgency.id)
         .order("date", { ascending: false });
 
       // If creator, only show their own logs
@@ -67,18 +70,19 @@ export default function Konten() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user) return;
+    if (!user || !currentAgency) return;
 
     try {
       const { error } = await supabase
         .from("content_logs")
-        .insert({
+        .insert([{
           user_id: user.id,
+          agency_id: currentAgency.id,
           date: formData.date,
           link: formData.link,
           post_number: parseInt(formData.post_number),
           is_counted: formData.is_counted
-        });
+        }]);
 
       if (error) throw error;
 

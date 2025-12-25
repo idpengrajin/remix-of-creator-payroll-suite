@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Save, Plus, Trash2, Pencil } from "lucide-react";
 
@@ -36,6 +37,7 @@ interface CommissionRule {
 }
 
 export default function Konfigurasi() {
+  const { currentAgency } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   
@@ -64,14 +66,18 @@ export default function Konfigurasi() {
   const [newHoliday, setNewHoliday] = useState("");
 
   useEffect(() => {
-    fetchRules();
-  }, []);
+    if (currentAgency) {
+      fetchRules();
+    }
+  }, [currentAgency]);
 
   const fetchRules = async () => {
+    if (!currentAgency) return;
+    
     try {
       const [payrollRes, commissionRes] = await Promise.all([
-        supabase.from("aturan_payroll").select("*").maybeSingle(),
-        supabase.from("aturan_komisi").select("*"),
+        supabase.from("aturan_payroll").select("*").eq("agency_id", currentAgency.id).maybeSingle(),
+        supabase.from("aturan_komisi").select("*").eq("agency_id", currentAgency.id),
       ]);
 
       if (payrollRes.error) throw payrollRes.error;

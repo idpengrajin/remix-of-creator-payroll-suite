@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 
 export default function SesiLive() {
-  const { user, userRole } = useAuth();
+  const { user, userRole, currentAgency } = useAuth();
   const queryClient = useQueryClient();
   const [shift, setShift] = useState<"PAGI" | "SIANG" | "MALAM">("PAGI");
   const [activeSession, setActiveSession] = useState<string | null>(null);
@@ -26,11 +26,14 @@ export default function SesiLive() {
   };
 
   const { data: sessions = [] } = useQuery({
-    queryKey: ["sesi-live", user?.id, userRole],
+    queryKey: ["sesi-live", user?.id, userRole, currentAgency?.id],
     queryFn: async () => {
+      if (!currentAgency) return [];
+      
       let query = supabase
         .from("sesi_live")
         .select("*, profiles(name)")
+        .eq("agency_id", currentAgency.id)
         .order("check_in", { ascending: false });
 
       // If creator, only show their own sessions
@@ -43,7 +46,7 @@ export default function SesiLive() {
       if (error) throw error;
       return data as any;
     },
-    enabled: !!user,
+    enabled: !!user && !!currentAgency,
   });
 
   // Update live duration every second
@@ -90,12 +93,13 @@ export default function SesiLive() {
       const now = new Date();
       const { data, error } = await supabase
         .from("sesi_live")
-        .insert({
+        .insert([{
           user_id: user!.id,
+          agency_id: currentAgency?.id,
           date: format(now, "yyyy-MM-dd"),
           shift,
           check_in: now.toISOString(),
-        })
+        }])
         .select()
         .single();
 
