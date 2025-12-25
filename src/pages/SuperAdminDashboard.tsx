@@ -19,9 +19,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Building2, Users, TrendingUp, Crown, Ban, CheckCircle } from "lucide-react";
+import { Building2, Users, TrendingUp, Crown, Ban, CheckCircle, LogOut, LayoutDashboard } from "lucide-react";
 import { toast } from "sonner";
-import { Navigate } from "react-router-dom";
+import { Navigate, Link } from "react-router-dom";
 
 interface Agency {
   id: string;
@@ -36,7 +36,7 @@ interface Agency {
 }
 
 export default function SuperAdminDashboard() {
-  const { isSuperAdmin, loading } = useAuth();
+  const { isSuperAdmin, loading, signOut, currentAgency } = useAuth();
   const queryClient = useQueryClient();
 
   const { data: agencies, isLoading: agenciesLoading } = useQuery({
@@ -168,13 +168,29 @@ export default function SuperAdminDashboard() {
     <div className="min-h-screen bg-background">
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center">
-              <Crown className="h-5 w-5 text-white" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center">
+                <Crown className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold">Super Admin Dashboard</h1>
+                <p className="text-sm text-muted-foreground">Kelola semua agensi platform</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-bold">Super Admin Dashboard</h1>
-              <p className="text-sm text-muted-foreground">Kelola semua agensi platform</p>
+            <div className="flex items-center gap-2">
+              {currentAgency && (
+                <Link to="/dashboard">
+                  <Button variant="outline" size="sm">
+                    <LayoutDashboard className="h-4 w-4 mr-2" />
+                    Ke Dashboard Agensi
+                  </Button>
+                </Link>
+              )}
+              <Button variant="ghost" size="sm" onClick={signOut}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
             </div>
           </div>
         </div>
