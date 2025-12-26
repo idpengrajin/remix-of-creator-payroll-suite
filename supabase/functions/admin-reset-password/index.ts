@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Create client with user's token to verify they're an admin
+    // Create client with user's token to verify they're an admin or super admin
     const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -39,15 +39,26 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Check if user is super admin first
+    const { data: isSuperAdmin } = await supabaseClient.rpc("is_super_admin", {
+      _user_id: user.id,
+    });
+
     // Check if user is admin using the has_role function
-    const { data: isAdmin, error: roleError } = await supabaseClient.rpc("has_role", {
+    const { data: isAdmin } = await supabaseClient.rpc("has_role", {
       _user_id: user.id,
       _role: "ADMIN",
     });
 
-    if (roleError || !isAdmin) {
+    // Check if user is agency owner
+    const { data: isAgencyOwner } = await supabaseClient.rpc("has_role", {
+      _user_id: user.id,
+      _role: "AGENCY_OWNER",
+    });
+
+    if (!isSuperAdmin && !isAdmin && !isAgencyOwner) {
       return new Response(
-        JSON.stringify({ error: "Only admins can reset passwords" }),
+        JSON.stringify({ error: "Only admins, agency owners, or super admins can reset passwords" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -67,6 +78,31 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: "Password must be at least 6 characters" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // If not super admin, verify the target user is in the same agency
+    if (!isSuperAdmin) {
+      // Get admin's agency
+      const { data: adminMembership } = await supabaseClient
+        .from("agency_members")
+        .select("agency_id")
+        .eq("user_id", user.id)
+        .single();
+
+      // Get target user's agency
+      const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+      const { data: targetMembership } = await adminClient
+        .from("agency_members")
+        .select("agency_id")
+        .eq("user_id", userId)
+        .single();
+
+      if (!adminMembership || !targetMembership || adminMembership.agency_id !== targetMembership.agency_id) {
+        return new Response(
+          JSON.stringify({ error: "You can only reset passwords for users in your agency" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // Create admin client with service role key

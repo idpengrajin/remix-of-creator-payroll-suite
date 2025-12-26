@@ -40,6 +40,7 @@ import {
   User,
   Package,
   ChevronRight,
+  Eye,
 } from "lucide-react";
 
 interface NavItem {
@@ -156,7 +157,7 @@ const itemVariants = {
 };
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { signOut, userRole, userName, loading, currentAgency, isSuperAdmin } = useAuth();
+  const { signOut, userRole, userName, loading, currentAgency, isSuperAdmin, impersonation, stopImpersonation } = useAuth();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -422,6 +423,26 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                   );
                 })}
               </nav>
+            </div>
+          )}
+
+          {/* Impersonation Banner */}
+          {impersonation.isImpersonating && (
+            <div className="bg-red-600 text-white px-4 py-2 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Eye className="h-4 w-4" />
+                <span className="text-sm font-medium">
+                  Mode Impersonate: Anda sedang mengakses <strong>{impersonation.impersonatedAgencyName}</strong>
+                </span>
+              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={stopImpersonation}
+                className="bg-white text-red-600 hover:bg-red-50"
+              >
+                Keluar Mode Impersonate
+              </Button>
             </div>
           )}
 

@@ -18,6 +18,13 @@ interface AgencyMembership {
   agency: Agency;
 }
 
+interface ImpersonationState {
+  isImpersonating: boolean;
+  originalAgencyId: string | null;
+  impersonatedAgencyId: string | null;
+  impersonatedAgencyName: string | null;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -28,11 +35,14 @@ interface AuthContextType {
   agencyRole: string | null;
   agencies: AgencyMembership[];
   isSuperAdmin: boolean;
+  impersonation: ImpersonationState;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, name: string, options?: SignUpOptions) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   updateUserName: (name: string) => void;
   switchAgency: (agencyId: string) => void;
+  startImpersonation: (agencyId: string, agencyName: string) => void;
+  stopImpersonation: () => void;
 }
 
 interface SignUpOptions {
@@ -53,7 +63,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [agencyRole, setAgencyRole] = useState<string | null>(null);
   const [agencies, setAgencies] = useState<AgencyMembership[]>([]);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [impersonation, setImpersonation] = useState<ImpersonationState>({
+    isImpersonating: false,
+    originalAgencyId: null,
+    impersonatedAgencyId: null,
+    impersonatedAgencyName: null,
+  });
   const navigate = useNavigate();
+
+  // Check for saved impersonation on mount
+  useEffect(() => {
+    const savedImpersonation = localStorage.getItem("impersonation");
+    if (savedImpersonation) {
+      try {
+        const parsed = JSON.parse(savedImpersonation);
+        setImpersonation(parsed);
+      } catch {
+        localStorage.removeItem("impersonation");
+      }
+    }
+  }, []);
 
   const fetchAgencyData = async (userId: string) => {
     try {
@@ -98,6 +127,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }));
         
         setAgencies(formattedMemberships);
+        
+        // Check if we're in impersonation mode
+        const savedImpersonation = localStorage.getItem("impersonation");
+        if (savedImpersonation && superAdmin) {
+          try {
+            const parsed = JSON.parse(savedImpersonation);
+            if (parsed.isImpersonating && parsed.impersonatedAgencyId) {
+              // Fetch the impersonated agency data
+              const { data: impersonatedAgency } = await supabase
+                .from("agencies")
+                .select("*")
+                .eq("id", parsed.impersonatedAgencyId)
+                .single();
+              
+              if (impersonatedAgency) {
+                setCurrentAgency(impersonatedAgency);
+                setAgencyRole("AGENCY_OWNER"); // Super admin gets full access when impersonating
+                setImpersonation(parsed);
+                return;
+              }
+            }
+          } catch {
+            localStorage.removeItem("impersonation");
+          }
+        }
         
         // Set current agency from localStorage or first agency
         const savedAgencyId = localStorage.getItem("currentAgencyId");
@@ -300,7 +354,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAgencyRole(null);
     setAgencies([]);
     setIsSuperAdmin(false);
+    setImpersonation({
+      isImpersonating: false,
+      originalAgencyId: null,
+      impersonatedAgencyId: null,
+      impersonatedAgencyName: null,
+    });
     localStorage.removeItem("currentAgencyId");
+    localStorage.removeItem("impersonation");
     
     try {
       // Attempt to sign out from Supabase (may fail if session already expired)
@@ -326,6 +387,64 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const startImpersonation = async (agencyId: string, agencyName: string) => {
+    if (!isSuperAdmin) return;
+    
+    const originalId = currentAgency?.id || null;
+    
+    // Fetch the impersonated agency
+    const { data: impersonatedAgency } = await supabase
+      .from("agencies")
+      .select("*")
+      .eq("id", agencyId)
+      .single();
+    
+    if (impersonatedAgency) {
+      const newImpersonation: ImpersonationState = {
+        isImpersonating: true,
+        originalAgencyId: originalId,
+        impersonatedAgencyId: agencyId,
+        impersonatedAgencyName: agencyName,
+      };
+      
+      setImpersonation(newImpersonation);
+      setCurrentAgency(impersonatedAgency);
+      setAgencyRole("AGENCY_OWNER"); // Full access when impersonating
+      localStorage.setItem("impersonation", JSON.stringify(newImpersonation));
+      localStorage.setItem("currentAgencyId", agencyId);
+    }
+  };
+
+  const stopImpersonation = () => {
+    const originalId = impersonation.originalAgencyId;
+    
+    setImpersonation({
+      isImpersonating: false,
+      originalAgencyId: null,
+      impersonatedAgencyId: null,
+      impersonatedAgencyName: null,
+    });
+    localStorage.removeItem("impersonation");
+    
+    // Return to original agency or first available
+    if (originalId) {
+      const originalMembership = agencies.find(a => a.agency_id === originalId);
+      if (originalMembership) {
+        setCurrentAgency(originalMembership.agency);
+        setAgencyRole(originalMembership.role);
+        localStorage.setItem("currentAgencyId", originalId);
+        return;
+      }
+    }
+    
+    // Fallback to first agency
+    if (agencies.length > 0) {
+      setCurrentAgency(agencies[0].agency);
+      setAgencyRole(agencies[0].role);
+      localStorage.setItem("currentAgencyId", agencies[0].agency_id);
+    }
+  };
+
   return (
     <AuthContext.Provider value={{ 
       user, 
@@ -337,11 +456,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       agencyRole,
       agencies,
       isSuperAdmin,
+      impersonation,
       signIn, 
       signUp, 
       signOut, 
       updateUserName,
-      switchAgency
+      switchAgency,
+      startImpersonation,
+      stopImpersonation
     }}>
       {children}
     </AuthContext.Provider>
